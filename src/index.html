@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Async Race</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+      header {
+        margin-bottom: 20px;
+      }
+
+      nav {
+        display: flex;
+        gap: 10px;
+      }
+
+      nav button {
+        padding: 8px 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .garage {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .controls input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .controls button {
+        padding: 8px 16px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .race-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .race-controls button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #race {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      #reset {
+        background-color: #f44336;
+        color: white;
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .car {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .car-name {
+        margin-right: 20px;
+        min-width: 100px;
+      }
+
+      .car-image {
+        width: 100px;
+        height: 50px;
+        background-color: #ccc;
+        margin-right: 20px;
+        position: relative;
+      }
+
+      .car-controls {
+        display: flex;
+        gap: 5px;
+      }
+
+      .car-controls button {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      .winners {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .winners table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+
+      .winners th,
+      .winners td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .winner:hover {
+        background-color: #f5f5f5;
+      }
+
+      .car-icon {
+        width: 30px;
+        height: 20px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+
+      .sort-by-wins,
+      .sort-by-time {
+        cursor: pointer;
+      }
+
+      .sort-by-wins:hover,
+      .sort-by-time:hover {
+        background-color: #f0f0f0;
+      }
+
+      .sort-arrow {
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <button id="garage-btn">Garage</button>
+        <button id="winners-btn">Winners</button>
+      </nav>
+    </header>
+
+    <div id="app"></div>
+
+    <template id="garage-template">
+      <section class="garage">
+        <h2>Garage (0)</h2>
+
+        <div class="controls">
+          <div>
+            <input type="text" id="new-car-name" placeholder="Car name" />
+            <input type="color" id="new-car-color" value="#ff0000" />
+            <button id="create-car">Create</button>
+          </div>
+          <div>
+            <input
+              type="text"
+              id="update-car-name"
+              placeholder="Car name"
+              disabled
+            />
+            <input
+              type="color"
+              id="update-car-color"
+              value="#ff0000"
+              disabled
+            />
+            <button id="update-car" disabled>Update</button>
+          </div>
+          <button id="generate-cars">Generate Cars</button>
+        </div>
+
+        <div class="race-controls">
+          <button id="race">Race</button>
+          <button id="reset" disabled>Reset</button>
+        </div>
+
+        <div class="pagination">
+          <button id="prev-page">Previous</button>
+          <span id="page-number">Page 1</span>
+          <button id="next-page">Next</button>
+        </div>
+
+        <div id="cars-container"></div>
+      </section>
+    </template>
+
+    <template id="car-template">
+      <div class="car">
+        <div class="car-controls">
+          <button class="select-btn">Select</button>
+          <button class="remove-btn">Remove</button>
+          <button class="start-btn">Start</button>
+          <button class="stop-btn" disabled>Stop</button>
+          <span class="car-name"></span>
+        </div>
+        <div class="car-image"></div>
+        <div class="finish-line" style="margin-left: auto; color: red">
+          FINISH
+        </div>
+      </div>
+    </template>
+
+    <template id="winners-template">
+      <section class="winners">
+        <h2>Winners</h2>
+        <p class="winners-count">Total winners: 0</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Position</th>
+              <th>Car</th>
+              <th>Name</th>
+              <th class="sort-by-wins">
+                Wins
+                <span class="sort-arrow"
+                  >${this.sortBy === 'wins' ? (this.sortOrder === 'ASC' ? '↑' :
+                  '↓') : ''}</span
+                >
+              </th>
+              <th class="sort-by-time">
+                Best Time
+                <span class="sort-arrow"
+                  >${this.sortBy === 'time' ? (this.sortOrder === 'ASC' ? '↑' :
+                  '↓') : ''}</span
+                >
+              </th>
+            </tr>
+          </thead>
+          <tbody id="winners-body"></tbody>
+        </table>
+
+        <div class="pagination">
+          <button class="prev-page">Previous</button>
+          <span class="page-info">Page 1</span>
+          <button class="next-page">Next</button>
+        </div>
+      </section>
+    </template>
+
+    <template id="winner-template">
+      <tr class="winner">
+        <td class="winner-position"></td>
+        <td class="winner-car"></td>
+        <td class="winner-name"></td>
+        <td class="winner-wins"></td>
+        <td class="winner-time"></td>
+      </tr>
+    </template>
+
+    <script src="dist/bundle.js"></script>
+  </body>
+</html>
