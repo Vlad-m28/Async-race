@@ -1,0 +1,207 @@
+/* Garage Styles */
+.garage-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.create-update {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.race-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.input-text {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.input-color {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.btn {
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn:hover {
+  background-color: #45a049;
+}
+
+.btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background-color: #f44336;
+}
+
+.btn-danger:hover {
+  background-color: #d32f2f;
+}
+
+.garage-title {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.page-title {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+/* Race Track Styles */
+.race-track-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.car-track {
+  position: relative;
+  padding-bottom: 20px;
+  border-bottom: 2px dashed #ccc;
+}
+
+.car-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.car-name {
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.track {
+  position: relative;
+  height: 50px;
+  margin-top: 5px;
+}
+
+.car {
+  position: absolute;
+  width: 80px;
+  height: 40px;
+  left: 0;
+  transition: left 0.1s linear;
+  z-index: 2;
+}
+
+.finish-flag {
+  position: absolute;
+  right: 20px;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M5,5 L35,5 L5,35 Z" fill="red"/><path d="M5,5 L5,35 L35,35 Z" fill="black"/></svg>');
+  background-size: contain;
+  z-index: 1;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-title {
+  color: #4caf50;
+  margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .create-update {
+    flex-direction: column;
+  }
+
+  .control-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .input-text {
+    width: 100%;
+  }
+}
+
+.car.error-state {
+  animation: shake 0.5s;
+  border: 2px dashed red;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}

@@ -1,283 +1,311 @@
-// import './garage.css';
-import { Api } from '../../api/api';
-import { Car } from '../../api/types';
-import { CarComponent } from '../car/car';
-import { generateRandomCars } from '../../utils/helpers';
+import { Api } from "../../api/api";
+import { CarComponent } from "./car";
+import { ICar } from "../../types/interfaces";
+import { showModal, generateRandomColor, generateRandomName } from "../../utils/helpers";
 
 export class Garage {
     private currentPage = 1;
-    private readonly limit = 7;
-    private totalCount = 0;
-    private cars: Car[] = [];
-    private carComponents: CarComponent[] = [];
-    private selectedCarId: number | null = null;
-    private raceInProgress = false;
-    private element: HTMLElement;
+    private cars: ICar[] = [];
+    private totalCars = 0;
+    private raceStarted = false;
+    private carsOnTrack: { [key: number]: CarComponent } = {};
+    private selectedCar: ICar | null = null;
+    private readonly carsPerPage = 7;
 
     constructor() {
-        this.element = this.createGarageElement();
-        this.loadCars();
+        this.startRace = this.startRace.bind(this);
+        this.resetRace = this.resetRace.bind(this);
+        this.prevPage = this.prevPage.bind(this);
+        this.nextPage = this.nextPage.bind(this);
     }
 
-    private createGarageElement(): HTMLElement {
-        const garage = document.createElement('div');
-        garage.className = 'garage';
+    public async render(): Promise<void> {
+        await this.loadCars();
+        const garageView = document.getElementById('garage-view');
+        if (!garageView) return;
 
-        const controls = document.createElement('div');
-        controls.className = 'garage-controls';
+        garageView.innerHTML = `
+            <div class="garage-controls">
+                <div class="create-update">
+                    <div class="control-group">
+                        <input type="text" class="input-text create-name" placeholder="Car name">
+                        <input type="color" class="input-color create-color" value="#ffffff">
+                        <button class="btn create-btn">Create</button>
+                    </div>
+                    <div class="control-group">
+                        <input type="text" class="input-text update-name" placeholder="Car name" disabled>
+                        <input type="color" class="input-color update-color" value="#ffffff" disabled>
+                        <button class="btn update-btn" disabled>Update</button>
+                    </div>
+                </div>
+                <div class="race-controls">
+                    <button class="btn race-btn">Race</button>
+                    <button class="btn reset-btn" disabled>Reset</button>
+                    <button class="btn generate-btn">Generate Cars</button>
+                </div>
+            </div>
+            <h2 class="garage-title">Garage (${this.totalCars})</h2>
+            <h3 class="page-title">Page #${this.currentPage}</h3>
+            <div class="race-track-container" id="race-track-container"></div>
+            <div class="pagination">
+                <button class="btn prev-btn" ${this.currentPage === 1 ? 'disabled' : ''}>Prev</button>
+                <button class="btn next-btn" ${this.currentPage * this.carsPerPage >= this.totalCars ? 'disabled' : ''}>Next</button>
+            </div>
+        `;
 
-        const raceBtn = document.createElement('button');
-        raceBtn.textContent = 'Race';
-        raceBtn.addEventListener('click', () => this.startRace());
-
-        const resetBtn = document.createElement('button');
-        resetBtn.textContent = 'Reset';
-        resetBtn.addEventListener('click', () => this.resetRace());
-
-        const generateBtn = document.createElement('button');
-        generateBtn.textContent = 'Generate Cars';
-        generateBtn.addEventListener('click', () => this.generateRandomCars());
-
-        controls.append(raceBtn, resetBtn, generateBtn);
-
-        const createForm = document.createElement('form');
-        createForm.className = 'car-form';
-
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.placeholder = 'Car name';
-        nameInput.required = true;
-
-        const colorInput = document.createElement('input');
-        colorInput.type = 'color';
-        colorInput.value = '#000000';
-
-        const createBtn = document.createElement('button');
-        createBtn.type = 'submit';
-        createBtn.textContent = 'Create';
-
-        createForm.append(nameInput, colorInput, createBtn);
-        createForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.createCar(nameInput.value, colorInput.value);
-            nameInput.value = '';
-        });
-
-        const updateForm = document.createElement('form');
-        updateForm.className = 'car-form';
-
-        const updateNameInput = document.createElement('input');
-        updateNameInput.type = 'text';
-        updateNameInput.placeholder = 'Car name';
-        updateNameInput.required = true;
-        updateNameInput.disabled = true;
-
-        const updateColorInput = document.createElement('input');
-        updateColorInput.type = 'color';
-        updateColorInput.value = '#000000';
-        updateColorInput.disabled = true;
-
-        const updateBtn = document.createElement('button');
-        updateBtn.type = 'submit';
-        updateBtn.textContent = 'Update';
-        updateBtn.disabled = true;
-
-        updateForm.append(updateNameInput, updateColorInput, updateBtn);
-        updateForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (this.selectedCarId) {
-                this.updateCar(this.selectedCarId, updateNameInput.value, updateColorInput.value);
-                updateNameInput.value = '';
-                updateNameInput.disabled = true;
-                updateColorInput.disabled = true;
-                updateBtn.disabled = true;
-                this.selectedCarId = null;
-            }
-        });
-
-        controls.append(createForm, updateForm);
-
-        const pagination = document.createElement('div');
-        pagination.className = 'pagination';
-
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = 'Prev';
-        prevBtn.addEventListener('click', () => this.prevPage());
-
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = 'Next';
-        nextBtn.addEventListener('click', () => this.nextPage());
-
-        const pageInfo = document.createElement('span');
-        pageInfo.className = 'page-info';
-
-        pagination.append(prevBtn, pageInfo, nextBtn);
-
-        const garageHeader = document.createElement('h2');
-        garageHeader.className = 'garage-header';
-
-        const carsContainer = document.createElement('div');
-        carsContainer.className = 'cars-container';
-
-        garage.append(controls, pagination, garageHeader, carsContainer);
-
-        return garage;
+        this.renderCars();
+        this.setupEventListeners();
     }
 
     private async loadCars(): Promise<void> {
-        const { cars, count } = await Api.getCars(this.currentPage, this.limit);
-        this.cars = cars;
-        this.totalCount = count;
-        this.render();
-    }
-
-    private render(): void {
-        const carsContainer = this.element.querySelector('.cars-container') as HTMLElement;
-        carsContainer.innerHTML = '';
-
-        this.carComponents = this.cars.map((car) => {
-            const carComponent = new CarComponent(
-                car,
-                (id) => this.selectCar(id),
-                (id) => this.removeCar(id)
-            );
-            carsContainer.appendChild(carComponent.render());
-            return carComponent;
-        });
-
-        const pageInfo = this.element.querySelector('.page-info') as HTMLElement;
-        pageInfo.textContent = `Page ${this.currentPage}`;
-
-        const garageHeader = this.element.querySelector('.garage-header') as HTMLElement;
-        garageHeader.textContent = `Garage (${this.totalCount} cars)`;
-
-        const prevBtn = this.element.querySelector('.pagination button:first-child') as HTMLButtonElement;
-        prevBtn.disabled = this.currentPage <= 1;
-
-        const nextBtn = this.element.querySelector('.pagination button:last-child') as HTMLButtonElement;
-        nextBtn.disabled = this.currentPage * this.limit >= this.totalCount;
-    }
-
-    private async createCar(name: string, color: string): Promise<void> {
-        await Api.createCar({ name, color });
-        this.loadCars();
-    }
-
-    private selectCar(id: number): void {
-        this.selectedCarId = id;
-        const updateForm = this.element.querySelector('.car-form:last-child') as HTMLFormElement;
-        const nameInput = updateForm.querySelector('input[type="text"]') as HTMLInputElement;
-        const colorInput = updateForm.querySelector('input[type="color"]') as HTMLInputElement;
-        const submitBtn = updateForm.querySelector('button') as HTMLButtonElement;
-
-        const car = this.cars.find((c) => c.id === id);
-        if (car) {
-            nameInput.value = car.name;
-            colorInput.value = car.color;
-            nameInput.disabled = false;
-            colorInput.disabled = false;
-            submitBtn.disabled = false;
+        try {
+            const { cars, total } = await Api.getCars(this.currentPage, this.carsPerPage);
+            this.cars = cars;
+            this.totalCars = total;
+        } catch (error) {
+            console.error('Failed to load cars:', error);
         }
     }
 
-    private async updateCar(id: number, name: string, color: string): Promise<void> {
-        await Api.updateCar(id, { name, color });
-        this.loadCars();
+    private renderCars(): void {
+        const container = document.getElementById('race-track-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+        this.carsOnTrack = {};
+
+        this.cars.forEach(car => {
+            const carComponent = new CarComponent(
+                car,
+                (id) => this.deleteCar(id),
+                (id) => this.selectCar(id),
+                async (id) => {
+                    try {
+                        return await this.startCar(id);
+                    } catch (error) {
+                        console.error(`Car ${id} failed:`, error);
+                        throw error;
+                    }
+                },
+                (id) => this.stopCar(id)
+            );
+            container.appendChild(carComponent.render());
+            this.carsOnTrack[car.id] = carComponent;
+        });
     }
 
-    private async removeCar(id: number): Promise<void> {
-        await Api.deleteCar(id);
-        await Api.deleteWinner(id).catch(() => {});
-        this.loadCars();
+    private setupEventListeners(): void {
+        document.querySelector('.create-btn')?.addEventListener('click', () => {
+            const nameInput = document.querySelector('.create-name') as HTMLInputElement;
+            const colorInput = document.querySelector('.create-color') as HTMLInputElement;
+            if (nameInput.value.trim()) {
+                this.createCar(nameInput.value.trim(), colorInput.value);
+                nameInput.value = '';
+            }
+        });
+
+        document.querySelector('.update-btn')?.addEventListener('click', () => {
+            if (!this.selectedCar) return;
+            const nameInput = document.querySelector('.update-name') as HTMLInputElement;
+            const colorInput = document.querySelector('.update-color') as HTMLInputElement;
+            if (nameInput.value.trim()) {
+                this.updateCar(this.selectedCar.id, nameInput.value.trim(), colorInput.value);
+            }
+        });
+
+        document.querySelector('.race-btn')?.addEventListener('click', this.startRace);
+        document.querySelector('.reset-btn')?.addEventListener('click', this.resetRace);
+        document.querySelector('.generate-btn')?.addEventListener('click', () => this.generateCars());
+        document.querySelector('.prev-btn')?.addEventListener('click', this.prevPage);
+        document.querySelector('.next-btn')?.addEventListener('click', this.nextPage);
     }
 
-    private async generateRandomCars(): Promise<void> {
-        const cars = generateRandomCars(100);
-        await Promise.all(cars.map((car) => Api.createCar(car)));
-        this.loadCars();
+    private async startCar(id: number): Promise<number> {
+        if (!this.carsOnTrack[id]) {
+            throw new Error(`Car ${id} not found on track`);
+        }
+
+        const car = this.carsOnTrack[id];
+        let engineResponse;
+        
+        try {
+            engineResponse = await Api.startEngine(id);
+            const time = engineResponse.distance / engineResponse.velocity;
+
+            car.animate(time);
+            car.setDisabled(true);
+            car.setErrorState(false);
+
+            const { success } = await Api.drive(id);
+            if (!success) {
+                throw new Error('Drive failed');
+            }
+
+            return time;
+        } catch (error) {
+            car.stopAnimation();
+            car.resetPosition();
+            car.setErrorState(true);
+            car.setDisabled(false);
+
+            if (engineResponse) {
+                await Api.stopEngine(id).catch(() => {});
+            }
+
+            throw error;
+        }
+    }
+
+    private async stopCar(id: number): Promise<void> {
+        const car = this.carsOnTrack[id];
+        if (!car) return;
+        
+        await Api.stopEngine(id);
+        car.stopAnimation();
+        car.resetPosition();
+        car.setErrorState(false);
+        car.setDisabled(false);
     }
 
     private async startRace(): Promise<void> {
-        if (this.raceInProgress) return;
-        this.raceInProgress = true;
-
-        const raceBtn = this.element.querySelector('.garage-controls button:first-child') as HTMLButtonElement;
-        raceBtn.disabled = true;
-
-        const resetBtn = this.element.querySelector('.garage-controls button:nth-child(2)') as HTMLButtonElement;
-        resetBtn.disabled = false;
+        if (this.raceStarted || this.cars.length === 0) return;
+        
+        this.raceStarted = true;
+        this.toggleRaceControls(true);
 
         try {
-            const winner = await Promise.any(
-                this.carComponents.map(async (carComponent) => {
-                    const time = await carComponent.start();
-                    return { id: carComponent['car'].id, time };
+            const raceResults = await Promise.allSettled(
+                this.cars.map(async car => {
+                    try {
+                        const time = await this.startCar(car.id);
+                        return { id: car.id, time, success: true };
+                    } catch {
+                        return { id: car.id, time: 0, success: false };
+                    }
                 })
             );
 
-            await this.handleWinner(winner.id, winner.time);
-        } catch {
-            console.log('All cars failed');
+            const successfulRacers = raceResults
+                .filter(result => result.status === 'fulfilled' && result.value.success)
+                .map(result => (result as PromiseFulfilledResult<{id: number, time: number, success: boolean}>).value);
+
+            if (successfulRacers.length > 0) {
+                const winner = successfulRacers.reduce((prev, current) => 
+                    (prev.time < current.time) ? prev : current
+                );
+                
+                const winnerCar = this.cars.find(c => c.id === winner.id);
+                if (winnerCar) {
+                    showModal(`${winnerCar.name} won in ${(winner.time / 1000).toFixed(2)}s!`);
+                    await this.handleWinner(winner.id, winner.time);
+                }
+            } else {
+                showModal('Race finished with no winners!');
+            }
         } finally {
-            this.raceInProgress = false;
+            this.raceStarted = false;
+            this.toggleRaceControls(false);
         }
     }
 
     private async resetRace(): Promise<void> {
-        await Promise.all(this.carComponents.map((car) => car.stop()));
-
-        const raceBtn = this.element.querySelector('.garage-controls button:first-child') as HTMLButtonElement;
-        raceBtn.disabled = false;
-
-        const resetBtn = this.element.querySelector('.garage-controls button:nth-child(2)') as HTMLButtonElement;
-        resetBtn.disabled = true;
+        if (!this.raceStarted) return;
+        
+        await Promise.all(
+            this.cars.map(car => 
+                this.stopCar(car.id).catch(() => {})
+            )
+        );
+        
+        this.raceStarted = false;
+        this.toggleRaceControls(false);
     }
 
-    private async handleWinner(carId: number, time: number): Promise<void> {
+    private toggleRaceControls(raceStarted: boolean): void {
+        const raceBtn = document.querySelector('.race-btn') as HTMLButtonElement;
+        const resetBtn = document.querySelector('.reset-btn') as HTMLButtonElement;
+        const generateBtn = document.querySelector('.generate-btn') as HTMLButtonElement;
+        
+        if (raceBtn) raceBtn.disabled = raceStarted;
+        if (resetBtn) resetBtn.disabled = !raceStarted;
+        if (generateBtn) generateBtn.disabled = raceStarted;
+    }
+
+    private async createCar(name: string, color: string): Promise<void> {
+        await Api.createCar({ name, color });
+        await this.render();
+    }
+
+    private async updateCar(id: number, name: string, color: string): Promise<void> {
+        await Api.updateCar(id, { id, name, color });
+        await this.render();
+        this.selectedCar = null;
+    }
+
+    private async deleteCar(id: number): Promise<void> {
+        await Api.deleteCar(id);
         try {
-            const car = await Api.getCar(carId);
-            const winnerInfo = document.createElement('div');
-            winnerInfo.className = 'winner-info';
-            winnerInfo.textContent = `${car.name} won in ${(time / 1000).toFixed(2)}s!`;
-            document.body.appendChild(winnerInfo);
+            await Api.deleteWinner(id);
+        } catch (e) {
+            console.log('No winner to delete');
+        }
+        await this.render();
+    }
 
-            setTimeout(() => {
-                winnerInfo.remove();
-            }, 3000);
+    private selectCar(id: number): void {
+        this.selectedCar = this.cars.find(c => c.id === id) || null;
+        if (this.selectedCar) {
+            const nameInput = document.querySelector('.update-name') as HTMLInputElement;
+            const colorInput = document.querySelector('.update-color') as HTMLInputElement;
+            const updateBtn = document.querySelector('.update-btn') as HTMLButtonElement;
 
-            try {
-                const existingWinner = await Api.getWinner(carId);
-                await Api.updateWinner(carId, {
-                    wins: existingWinner.wins + 1,
-                    time: Math.min(existingWinner.time, time),
-                });
-            } catch {
-                await Api.createWinner({
-                    id: carId,
-                    wins: 1,
-                    time,
-                });
-            }
-        } catch (error) {
-            console.error('Error handling winner:', error);
+            nameInput.value = this.selectedCar.name;
+            colorInput.value = this.selectedCar.color;
+            nameInput.disabled = false;
+            colorInput.disabled = false;
+            updateBtn.disabled = false;
         }
     }
 
-    private prevPage(): void {
+    private async generateCars(): Promise<void> {
+        const promises = [];
+        for (let i = 0; i < 100; i++) {
+            promises.push(Api.createCar({
+                name: generateRandomName(),
+                color: generateRandomColor()
+            }));
+        }
+        await Promise.all(promises);
+        await this.render();
+    }
+
+    private async prevPage(): Promise<void> {
         if (this.currentPage > 1) {
             this.currentPage--;
-            this.loadCars();
+            await this.render();
         }
     }
 
-    private nextPage(): void {
-        if (this.currentPage * this.limit < this.totalCount) {
+    private async nextPage(): Promise<void> {
+        if (this.currentPage * this.carsPerPage < this.totalCars) {
             this.currentPage++;
-            this.loadCars();
+            await this.render();
         }
     }
 
-    public renderGarage(): HTMLElement {
-        return this.element;
+    private async handleWinner(id: number, time: number): Promise<void> {
+        try {
+            const winner = await Api.getWinner(id);
+            await Api.updateWinner(id, {
+                wins: winner.wins + 1,
+                time: Math.min(winner.time, time)
+            });
+        } catch (e) {
+            await Api.createWinner({
+                id,
+                wins: 1,
+                time
+            });
+        }
     }
 }

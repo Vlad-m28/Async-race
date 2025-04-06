@@ -1,9 +1,0 @@
-@keyframes engineBoost {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(5px); }
-    100% { transform: translateX(0); }
-  }
-  
-  .car-svg.engine-start {
-    animation: engineBoost 0.3s infinite;
-  }

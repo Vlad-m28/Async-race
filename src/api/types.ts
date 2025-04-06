@@ -16,8 +16,15 @@ export interface Winner {
 }
 
 export interface WinnerWithCar extends Winner {
-    car: Car;
+    car: {
+        name: string;
+        color: string;
+    };
 }
 
-export type SortBy = 'id' | 'wins' | 'time';
-export type SortOrder = 'ASC' | 'DESC';
+export interface WinnersParams {
+    page: number;
+    limit: number;
+    sort: 'id' | 'wins' | 'time';
+    order: 'ASC' | 'DESC';
+}
