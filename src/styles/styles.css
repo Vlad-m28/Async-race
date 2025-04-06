@@ -1,207 +1,139 @@
-/* Garage Styles */
-.garage-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-}
-
-.create-update {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.control-group {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.race-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.input-text {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  min-width: 200px;
-}
-
-.input-color {
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.btn {
-  padding: 8px 16px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn:hover {
-  background-color: #45a049;
-}
-
-.btn:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-.btn-danger {
-  background-color: #f44336;
-}
-
-.btn-danger:hover {
-  background-color: #d32f2f;
-}
-
-.garage-title {
-  font-size: 24px;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.page-title {
-  font-size: 18px;
-  margin-bottom: 20px;
-  color: #666;
-}
-
-/* Race Track Styles */
-.race-track-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.car-track {
-  position: relative;
-  padding-bottom: 20px;
-  border-bottom: 2px dashed #ccc;
-}
-
-.car-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.car-name {
-  font-weight: bold;
-  margin-left: 10px;
-}
-
-.track {
-  position: relative;
-  height: 50px;
-  margin-top: 5px;
-}
-
-.car {
-  position: absolute;
-  width: 80px;
-  height: 40px;
-  left: 0;
-  transition: left 0.1s linear;
-  z-index: 2;
-}
-
-.finish-flag {
-  position: absolute;
-  right: 20px;
-  top: 0;
-  width: 40px;
-  height: 40px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M5,5 L35,5 L5,35 Z" fill="red"/><path d="M5,5 L5,35 L35,35 Z" fill="black"/></svg>');
-  background-size: contain;
-  z-index: 1;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-/* Modal */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal.active {
-  display: flex;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-}
-
-.modal-title {
-  color: #4caf50;
-  margin-bottom: 15px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .create-update {
-    flex-direction: column;
+/* Основные стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
   }
-
-  .control-group {
-    flex-direction: column;
-    align-items: flex-start;
+  
+  header {
+    background-color: #333;
+    padding: 1rem;
   }
-
-  .input-text {
+  
+  nav {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .active {
+    background-color: #45a049;
+  }
+  
+  /* Стили гаража */
+  .garage {
+    padding: 1rem;
+  }
+  
+  .car {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .car-track {
+    position: relative;
+    height: 40px;
+    margin-top: 0.5rem;
+    border-bottom: 2px dashed #333;
+  }
+  
+  .car-icon {
+    position: absolute;
+    width: 40px;
+    height: 20px;
+    transition: left 0.1s linear;
+  }
+  
+  .finish-flag {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 1.5rem;
+  }
+  
+  .winner-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    z-index: 1000;
+  }
+  
+  /* Стили таблицы победителей */
+  .winners {
+    padding: 1rem;
+  }
+  
+  .winners-table {
     width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
   }
-}
-
-.car.error-state {
-  animation: shake 0.5s;
-  border: 2px dashed red;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
+  
+  .winners-table th, .winners-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
   }
-  25% {
-    transform: translateX(-5px);
+  
+  .winners-table th {
+    background-color: #4CAF50;
+    color: white;
   }
-  75% {
-    transform: translateX(5px);
+  
+  .winners-table tr:nth-child(even) {
+    background-color: #f2f2f2;
   }
-}
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  /* Формы */
+  input[type="text"], input[type="color"] {
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .controls {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .create-car, .race-controls {
+    display: flex;
+    align-items: center;
+  }
