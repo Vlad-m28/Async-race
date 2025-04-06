@@ -1,43 +1,65 @@
-import { AppController } from './controllers/app.controller';
-import { GaragePage } from './pages/garage.page';
-import { WinnersPage } from './pages/winners.page';
+// import './styles.css';
+import { Garage } from './components/garage/garage';
+import { Winners } from './components/winners/winners';
 
 export class App {
-    private garagePage: GaragePage;
-    private winnersPage: WinnersPage;
-    private appController = new AppController();
+    private garage: Garage;
+    private winners: Winners;
+    private currentView: 'garage' | 'winners' = 'garage';
+    private element: HTMLElement;
 
     constructor() {
-        this.initialize();
+        this.element = document.createElement('div');
+        this.element.className = 'app';
+
+        this.garage = new Garage();
+        this.winners = new Winners();
+
+        this.createHeader();
+        this.renderView();
     }
 
-    private async initialize() {
-        await this.appController.initialize();
-        this.garagePage = new GaragePage(this.appController.getGarageController());
-        this.winnersPage = new WinnersPage(this.appController.getWinnersController());
-        this.setupNavigation();
+    private createHeader(): void {
+        const header = document.createElement('header');
+        header.className = 'app-header';
+
+        const garageBtn = document.createElement('button');
+        garageBtn.textContent = 'Garage';
+        garageBtn.addEventListener('click', () => this.switchView('garage'));
+
+        const winnersBtn = document.createElement('button');
+        winnersBtn.textContent = 'Winners';
+        winnersBtn.addEventListener('click', () => this.switchView('winners'));
+
+        header.append(garageBtn, winnersBtn);
+        this.element.prepend(header);
     }
 
-    private setupNavigation() {
-        const garageBtn = document.getElementById('garage-btn');
-        const winnersBtn = document.getElementById('winners-btn');
-
-        garageBtn?.addEventListener('click', () => this.toggleViews(true));
-        winnersBtn?.addEventListener('click', () => this.toggleViews(false));
+    private switchView(view: 'garage' | 'winners'): void {
+        this.currentView = view;
+        this.renderView();
     }
 
-    private toggleViews(showGarage: boolean) {
-        const garageView = document.getElementById('garage-container');
-        const winnersView = document.getElementById('winners-container');
-        
-        if (showGarage) {
-            garageView?.classList.remove('hidden');
-            winnersView?.classList.add('hidden');
+    private renderView(): void {
+        const container = this.element.querySelector('.view-container') || document.createElement('div');
+        container.className = 'view-container';
+        container.innerHTML = '';
+
+        if (this.currentView === 'garage') {
+            container.appendChild(this.garage.renderGarage());
         } else {
-            garageView?.classList.add('hidden');
-            winnersView?.classList.remove('hidden');
+            container.appendChild(this.winners.renderWinners());
         }
+
+        if (!this.element.contains(container)) {
+            this.element.appendChild(container);
+        }
+    }
+
+    public start(): void {
+        document.body.appendChild(this.element);
     }
 }
 
-new App();
+const app = new App();
+app.start();

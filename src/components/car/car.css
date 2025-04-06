@@ -1,0 +1,34 @@
+.car-svg {
+    width: 100px;
+    height: 40px;
+    transition: transform 0.2s ease;
+  }
+  
+  .car-svg:hover {
+    transform: scale(1.1);
+  }
+  
+  .car-controls {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+  }
+  
+  .car-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-left: 0.5rem;
+  }
+  
+  .engine-start {
+    animation: vibrate 0.3s linear infinite;
+  }
+  
+  @keyframes vibrate {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(0); }
+    75% { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
